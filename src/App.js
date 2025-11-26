@@ -10,8 +10,7 @@ import {
   Youtube,
   Image as ImageIcon,
   Check,
-  Trophy,
-  ArrowDown
+  Trophy
 } from 'lucide-react';
 
 // --- DATA ---
@@ -478,11 +477,13 @@ const MuscleBadge = ({ muscle }) => (
 
 // We forward ref to the Card so the parent can scroll to it
 const ExerciseCard = React.forwardRef(({ exercise, index, dayId, isCompleted, onToggle }, ref) => {
-  const openVideo = () => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.searchQuery)}`, '_blank');
-  const openImages = () => window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(exercise.searchQuery)}`, '_blank');
-
+  
   // Format index (01, 02...)
   const formattedIndex = (index + 1).toString().padStart(2, '0');
+
+  // Video/Image Links - USING STANDARD ANCHOR TAGS FOR IOS COMPATIBILITY
+  const videoUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.searchQuery)}`;
+  const imageUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(exercise.searchQuery)}`;
 
   return (
     <div 
@@ -574,22 +575,26 @@ const ExerciseCard = React.forwardRef(({ exercise, index, dayId, isCompleted, on
         </div>
       </div>
 
-      {/* Footer Actions */}
+      {/* Footer Actions - USING A HREF INSTEAD OF BUTTON ONCLICK */}
       <div className="bg-black/20 p-3 border-t border-gray-800 grid grid-cols-2 gap-3">
-        <button 
-          onClick={openVideo}
-          className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-red-900/30 text-gray-300 text-xs font-bold py-2 rounded border border-gray-700 hover:border-red-500/50 transition-all"
+        <a 
+          href={videoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-red-900/30 text-gray-300 text-xs font-bold py-2 rounded border border-gray-700 hover:border-red-500/50 transition-all no-underline"
         >
           <Youtube size={16} className="text-red-500" />
           Watch Demo
-        </button>
-        <button 
-          onClick={openImages}
-          className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-blue-900/30 text-gray-300 text-xs font-bold py-2 rounded border border-gray-700 hover:border-blue-500/50 transition-all"
+        </a>
+        <a 
+          href={imageUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-blue-900/30 text-gray-300 text-xs font-bold py-2 rounded border border-gray-700 hover:border-blue-500/50 transition-all no-underline"
         >
           <ImageIcon size={16} className="text-blue-400" />
           View Form
-        </button>
+        </a>
       </div>
     </div>
   );
@@ -692,7 +697,7 @@ export default function NaturalHypertrophyApp() {
                 Hypertrophy<span className="text-blue-500">Architect</span>
               </h1>
               <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider font-semibold">
-                Version 6.0 • Auto-Flow
+                Version 7.0 • iOS Optimized
               </p>
             </div>
           </div>
