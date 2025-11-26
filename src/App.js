@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { 
   Dumbbell, 
@@ -7,11 +7,11 @@ import {
   Info, 
   Target,
   Zap,
-  BookOpen,
   Youtube,
   Image as ImageIcon,
   Check,
-  Trophy
+  Trophy,
+  ArrowDown
 } from 'lucide-react';
 
 // --- DATA ---
@@ -476,7 +476,8 @@ const MuscleBadge = ({ muscle }) => (
   </div>
 );
 
-const ExerciseCard = ({ exercise, index, dayId, isCompleted, onToggle }) => {
+// We forward ref to the Card so the parent can scroll to it
+const ExerciseCard = React.forwardRef(({ exercise, index, dayId, isCompleted, onToggle }, ref) => {
   const openVideo = () => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.searchQuery)}`, '_blank');
   const openImages = () => window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(exercise.searchQuery)}`, '_blank');
 
@@ -484,50 +485,60 @@ const ExerciseCard = ({ exercise, index, dayId, isCompleted, onToggle }) => {
   const formattedIndex = (index + 1).toString().padStart(2, '0');
 
   return (
-    <div className={`
+    <div 
+      ref={ref}
+      className={`
       relative rounded-xl overflow-hidden shadow-lg transition-all duration-300 border
       ${isCompleted 
-        ? 'bg-green-950/20 border-green-800/50' 
+        ? 'bg-green-950/20 border-green-800/50 opacity-90' 
         : 'bg-gray-900 border-gray-700 hover:border-blue-500/50'}
     `}>
       
-      {/* HEADER BAR: Serial # and Checkbox */}
-      <div className="flex justify-between items-center p-3 bg-black/20 border-b border-gray-800">
+      {/* HEADER BAR: Serial # + Exercise Name + Checkbox */}
+      <div className={`
+        flex justify-between items-center p-3 border-b
+        ${isCompleted ? 'bg-green-900/10 border-green-800/30' : 'bg-black/20 border-gray-800'}
+      `}>
         
-        {/* Serial Number (Top Left) */}
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-black text-gray-700 select-none">
+        {/* Left: Serial + Name */}
+        <div className="flex items-center gap-3 overflow-hidden">
+          <span className="text-xl font-black text-gray-600 select-none shrink-0">
             {formattedIndex}
           </span>
-          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold bg-gray-800 text-gray-300 border border-gray-600">
-            {exercise.type}
-          </span>
+          <h3 className={`text-base md:text-lg font-bold truncate ${isCompleted ? 'text-green-100' : 'text-white'}`}>
+            {exercise.name}
+          </h3>
         </div>
 
-        {/* Checkbox (Top Right) */}
+        {/* Right: Checkbox */}
         <button 
           onClick={onToggle}
           className={`
-            flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200
+            shrink-0 flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-200 ml-2
             ${isCompleted 
-              ? 'bg-green-600 border-green-500 text-white shadow-[0_0_15px_rgba(22,163,74,0.5)]' 
+              ? 'bg-green-600 border-green-500 text-white shadow-[0_0_15px_rgba(22,163,74,0.5)] scale-110' 
               : 'bg-gray-800 border-gray-600 text-gray-400 hover:bg-gray-700'}
           `}
         >
-          {isCompleted ? <Check size={16} strokeWidth={3} /> : <div className="w-4 h-4 rounded-full border-2 border-gray-500" />}
-          <span className="text-xs font-bold uppercase tracking-wide">
-            {isCompleted ? 'Done' : 'Mark Done'}
-          </span>
+          {isCompleted ? <Check size={18} strokeWidth={3} /> : <div className="w-4 h-4 rounded-full border-2 border-gray-500" />}
         </button>
       </div>
 
-      <div className="p-4 md:p-5 relative z-0">
-        {/* Title */}
-        <div className="mb-4">
-          <h3 className={`text-xl font-bold mb-1 transition-colors ${isCompleted ? 'text-green-100' : 'text-white'}`}>
-            {exercise.name}
-          </h3>
-          <p className="text-sm text-gray-300 font-medium leading-tight">{exercise.variant}</p>
+      <div className="p-4 relative z-0">
+        
+        {/* Sub-Header: Variant & Category (Moved down as requested) */}
+        <div className="mb-4 flex flex-col gap-1">
+           <div className="flex flex-wrap items-center gap-2">
+            <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded font-bold border
+              ${exercise.type === 'Compound' ? 'bg-purple-900/30 text-purple-300 border-purple-800' : 
+                exercise.type === 'Isolation' ? 'bg-amber-900/30 text-amber-300 border-amber-800' : 
+                'bg-blue-900/30 text-blue-300 border-blue-800'}`}>
+              {exercise.type}
+            </span>
+            <span className="text-sm text-gray-300 font-medium leading-tight">
+              {exercise.variant}
+            </span>
+           </div>
         </div>
 
         {/* Tags */}
@@ -536,7 +547,7 @@ const ExerciseCard = ({ exercise, index, dayId, isCompleted, onToggle }) => {
           <TempoBadge tempo={exercise.tempo} />
         </div>
 
-        {/* Stats Grid - High Contrast */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-2 mb-4 bg-black/40 rounded-lg p-2 border border-gray-700">
           <div className="text-center">
             <span className="block text-[10px] text-gray-400 uppercase tracking-wide font-bold">Sets</span>
@@ -556,7 +567,7 @@ const ExerciseCard = ({ exercise, index, dayId, isCompleted, onToggle }) => {
         <div className="bg-blue-900/10 rounded-lg p-3 border border-blue-800/40 mb-4">
           <div className="flex gap-2 items-start">
             <Info className="w-4 h-4 text-blue-300 mt-0.5 shrink-0" />
-            <p className="text-sm text-gray-200 italic leading-relaxed">
+            <p className="text-xs md:text-sm text-gray-300 italic leading-relaxed">
               {exercise.note}
             </p>
           </div>
@@ -567,28 +578,29 @@ const ExerciseCard = ({ exercise, index, dayId, isCompleted, onToggle }) => {
       <div className="bg-black/20 p-3 border-t border-gray-800 grid grid-cols-2 gap-3">
         <button 
           onClick={openVideo}
-          className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-red-900/30 text-gray-200 text-sm font-bold py-3 rounded-lg border border-gray-600 hover:border-red-500/50 transition-all"
+          className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-red-900/30 text-gray-300 text-xs font-bold py-2 rounded border border-gray-700 hover:border-red-500/50 transition-all"
         >
-          <Youtube size={18} className="text-red-500" />
+          <Youtube size={16} className="text-red-500" />
           Watch Demo
         </button>
         <button 
           onClick={openImages}
-          className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-blue-900/30 text-gray-200 text-sm font-bold py-3 rounded-lg border border-gray-600 hover:border-blue-500/50 transition-all"
+          className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-blue-900/30 text-gray-300 text-xs font-bold py-2 rounded border border-gray-700 hover:border-blue-500/50 transition-all"
         >
-          <ImageIcon size={18} className="text-blue-400" />
+          <ImageIcon size={16} className="text-blue-400" />
           View Form
         </button>
       </div>
     </div>
   );
-};
+});
 
 export default function NaturalHypertrophyApp() {
   const [selectedDay, setSelectedDay] = useState(1);
   const [completedExercises, setCompletedExercises] = useState({});
+  const itemRefs = useRef([]); // Store refs for auto-scrolling
 
-  // Load progress from phone storage on startup
+  // Load progress
   useEffect(() => {
     const saved = localStorage.getItem('workoutProgress');
     if (saved) {
@@ -596,12 +608,45 @@ export default function NaturalHypertrophyApp() {
     }
   }, []);
 
-  // Save progress whenever it changes
+  // Save progress
   useEffect(() => {
     localStorage.setItem('workoutProgress', JSON.stringify(completedExercises));
   }, [completedExercises]);
 
   const currentWorkout = workoutData.find(w => w.day === selectedDay);
+  const dayProgress = currentWorkout.exercises.filter((_, idx) => completedExercises[`${selectedDay}-${idx}`]).length;
+  const totalExercises = currentWorkout.exercises.length;
+  const isDayComplete = dayProgress === totalExercises;
+
+  // Grand Celebration Effect
+  useEffect(() => {
+    if (isDayComplete && totalExercises > 0) {
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 2,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#22c55e', '#3b82f6', '#ffffff']
+        });
+        confetti({
+          particleCount: 2,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#22c55e', '#3b82f6', '#ffffff']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+  }, [isDayComplete, totalExercises]);
 
   const toggleExercise = (day, index) => {
     const key = `${day}-${index}`;
@@ -612,21 +657,26 @@ export default function NaturalHypertrophyApp() {
       [key]: isNowComplete
     }));
 
-    // Trigger celebration if marking as done
     if (isNowComplete) {
+      // Small pop for single exercise
       confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#22c55e', '#3b82f6', '#ffffff'] // Green, Blue, White
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.7 },
+        disableForReducedMotion: true
       });
+
+      // Auto-scroll to next exercise if it exists
+      if (index < currentWorkout.exercises.length - 1) {
+        setTimeout(() => {
+          itemRefs.current[index + 1]?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }, 300); // Small delay for visual feedback
+      }
     }
   };
-
-  // Calculate progress for current day
-  const dayProgress = currentWorkout.exercises.filter((_, idx) => completedExercises[`${selectedDay}-${idx}`]).length;
-  const totalExercises = currentWorkout.exercises.length;
-  const isDayComplete = dayProgress === totalExercises;
 
   return (
     <div className="min-h-screen bg-black text-gray-100 font-sans pb-20">
@@ -642,7 +692,7 @@ export default function NaturalHypertrophyApp() {
                 Hypertrophy<span className="text-blue-500">Architect</span>
               </h1>
               <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider font-semibold">
-                Version 5.0 • High Contrast
+                Version 6.0 • Auto-Flow
               </p>
             </div>
           </div>
@@ -651,7 +701,7 @@ export default function NaturalHypertrophyApp() {
           <div className="flex flex-col items-end">
             <div className="flex items-center gap-1.5 text-xs font-bold text-gray-300">
               <span>{dayProgress}/{totalExercises}</span>
-              <Trophy size={14} className={isDayComplete ? "text-yellow-400" : "text-gray-600"} />
+              <Trophy size={14} className={isDayComplete ? "text-yellow-400 animate-pulse" : "text-gray-600"} />
             </div>
             <div className="w-20 h-1.5 bg-gray-800 rounded-full mt-1 overflow-hidden">
               <div 
@@ -671,7 +721,10 @@ export default function NaturalHypertrophyApp() {
             {workoutData.map((day) => (
               <button
                 key={day.day}
-                onClick={() => setSelectedDay(day.day)}
+                onClick={() => {
+                  setSelectedDay(day.day);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className={`
                   flex flex-col items-center justify-center p-3 rounded-xl min-w-[85px] transition-all duration-200 border active:scale-95
                   ${selectedDay === day.day 
@@ -737,7 +790,8 @@ export default function NaturalHypertrophyApp() {
           <div className="grid gap-6">
             {currentWorkout.exercises.map((exercise, idx) => (
               <ExerciseCard 
-                key={idx} 
+                key={`${selectedDay}-${idx}`} // Force re-render on day change to reset refs properly
+                ref={el => itemRefs.current[idx] = el}
                 exercise={exercise} 
                 index={idx}
                 dayId={selectedDay}
@@ -746,6 +800,14 @@ export default function NaturalHypertrophyApp() {
               />
             ))}
           </div>
+
+          {isDayComplete && (
+            <div className="mt-8 p-6 bg-green-900/20 border border-green-800 rounded-xl text-center animate-bounce-in">
+              <Trophy className="w-12 h-12 text-yellow-400 mx-auto mb-2" />
+              <h3 className="text-xl font-bold text-green-100">Workout Complete!</h3>
+              <p className="text-green-300 text-sm">Great job. Rest up for tomorrow.</p>
+            </div>
+          )}
         </div>
 
         {/* Legend / Info Footer */}
